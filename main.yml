@@ -1,0 +1,29 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup Cloud SDK
+      uses: google-github-actions/setup-gcloud@master
+      with:
+        version: 'latest'
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        export_default_credentials: true
+
+    - name: Build and Push Docker Image
+      run: |
+        gcloud builds submit --tag gcr.io/$GCP_PROJECT_ID/my-app
+
+    - name: Deploy to Cloud Run
+      run: |
+        gcloud run deploy my-app --image gcr.io/$GCP_PROJECT_ID/my-app --platform managed --region us-central1
